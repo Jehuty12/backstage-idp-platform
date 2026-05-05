@@ -1,11 +1,24 @@
 # Vagrantfile — Provision a 3-node Kubernetes cluster (kubeadm) on VirtualBox
-# Adjust BOX_NAME, MEMORY, CPUS, and IPs as needed.
+# Supports custom disk directory for organizing VM disks separately
 
+# ====== CONFIG — Adapt to your environment ======
 BOX_NAME           = "debian/bookworm64"
-MEMORY             = 2048
-CPUS               = 2
-# DISK_SIZE and advanced disk setup skipped (requires plugin)
+MEMORY             = 2048     # MB per VM
+CPUS               = 2        # CPUs per VM
+DISK_SIZE          = 10240    # MB (10 GB) - Additional disk per VM
+STORAGE_CONTROLLER = "SATA Controller"
 
+# === Disk directory configuration ===
+# Option 1: Store disks in G:\VMs\ (external organization)
+# DISK_DIR           = "G:\\VMs\\backstage-idp-k8s\\disks"
+
+# Option 2: Store disks locally in project (default)
+DISK_DIR           = File.join(Dir.pwd, "disks")
+
+# Create disk directory if it doesn't exist
+Dir.mkdir(DISK_DIR) unless Dir.exist?(DISK_DIR)
+
+# ====== Kubernetes nodes ======
 nodes = [
   { name: "master",  ip: "192.168.56.10", role: "master" },
   { name: "worker1", ip: "192.168.56.11", role: "worker" },
@@ -24,6 +37,14 @@ Vagrant.configure("2") do |config|
         vb.name = "k8s-#{node[:name]}"
         vb.memory = MEMORY
         vb.cpus = CPUS
+
+        # Attach secondary disk for container storage
+        disk_path = File.join(DISK_DIR, "disk-#{node[:name]}.vdi")
+        unless File.exist?(disk_path)
+          vb.customize ["createhd", "--filename", disk_path, "--size", DISK_SIZE]
+        end
+        vb.customize ["storageattach", :id, "--storagectl", STORAGE_CONTROLLER,
+                      "--port", "1", "--device", "0", "--type", "hdd", "--medium", disk_path]
       end
 
       # Common provisioning: install Docker and Kubernetes tools

@@ -2,11 +2,36 @@
 
 Cette phase configure et teste le cluster Kubernetes local via Vagrant + VirtualBox.
 
+## Organisation des fichiers — Disques VM
+
+Par défaut, les fichiers disques des VMs sont stockés dans :
+```
+backstage-idp-platform/disks/
+  ├── disk-master.vdi
+  ├── disk-worker1.vdi
+  └── disk-worker2.vdi
+```
+
+Pour utiliser un emplacement externe (ex: G:\VMs), éditer le `Vagrantfile` :
+```ruby
+# Option 1 : Stockage local (défaut)
+DISK_DIR = File.join(Dir.pwd, "disks")
+
+# Option 2 : Stockage externe (recommandé)
+DISK_DIR = "G:\\VMs\\backstage-idp-k8s\\disks"
+```
+
+Puis créer le répertoire s'il n'existe pas :
+```powershell
+mkdir G:\VMs\backstage-idp-k8s\disks
+```
+
 ## Prérequis
 
 - **VirtualBox** (>= 6.1) — https://www.virtualbox.org/
 - **Vagrant** (>= 2.3) — https://www.vagrantup.com/
 - **Au minimum** : 8GB RAM libre, 2 CPU par VM (configurable dans `Vagrantfile`)
+- **Espace disque** : ~30GB pour 3 VMs (10GB base OS + 10GB disque additionnel chacun)
 - **Windows** : utiliser PowerShell avec droits administrateur, ou WSL2 recommandé
 
 ## Commandes rapides
@@ -116,6 +141,52 @@ scp vagrant@192.168.56.10:/home/vagrant/.kube/config ~/.kube/config-vagrant
 - Master SSH: `vagrant ssh master` (ou SSH direct: `ssh vagrant@192.168.56.10`)
 - Kubernetes API: `https://192.168.56.10:6443` (depuis worker SSH, ou port-forward)
 - Worker1 port 30114 → 80 (forwarded pour ingress, config en Vagrantfile)
+
+### Nettoyage des VMs
+
+```bash
+# Arrêter les VMs (les garder)
+vagrant halt
+
+# Détruire les VMs
+vagrant destroy -f
+
+# Supprimer aussi les disques (optionnel)
+rm -r disks/   # ou rm -r G:\VMs\backstage-idp-k8s\disks\
+```
+
+## Organisation recommandée — Structure multi-projets
+
+## Organisation recommandée — Structure multi-projets
+
+Si tu utilises G:\VMs pour héberger les disques de plusieurs clusters/projets :
+
+```
+G:\VMs\
+├── backstage-idp-k8s\
+│   ├── disks\
+│   │   ├── disk-master.vdi
+│   │   ├── disk-worker1.vdi
+│   │   └── disk-worker2.vdi
+│   └── Vagrantfile (symlink ou copie)
+├── other-project-k8s\
+│   ├── disks\
+│   └── Vagrantfile
+└── README.md (doc centralisée)
+```
+
+**Avantages** :
+- Sépare le code du projet (`G:\DevProjects\backstage-idp-platform`) des gros fichiers disques
+- Facile à agrandir ou migrer les disques
+- Peut être sur un disque physique différent (optimisation I/O)
+
+**Configuration** :
+1. Créer `G:\VMs\backstage-idp-k8s\disks\`
+2. Éditer `Vagrantfile` ligne 12 :
+```ruby
+DISK_DIR = "G:\\VMs\\backstage-idp-k8s\\disks"
+```
+3. Lancer les VMs depuis `G:\DevProjects\backstage-idp-platform` : les disques iront automatiquement dans G:\VMs
 
 ## Prochaine étape
 
