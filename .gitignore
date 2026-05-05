@@ -29,6 +29,9 @@ kubeconfig-*
 *.bak
 *.backup
 
+# Generated kubeadm join script with sensitive token
+join.sh
+
 # Python
 __pycache__/
 *.pyc
