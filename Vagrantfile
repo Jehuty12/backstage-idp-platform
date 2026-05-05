@@ -50,6 +50,9 @@ Vagrant.configure("2") do |config|
         apt-get update
         apt-get install -y apt-transport-https ca-certificates curl gnupg lsb-release software-properties-common
         
+        # Install required dependencies for kubeadm
+        apt-get install -y conntrack ethtool socat
+        
         # Install Docker
         apt-get install -y docker.io
         systemctl enable --now docker
