@@ -1,0 +1,12 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: node-hello-service
+  description: Example Node.js service for IDP demo
+  tags:
+    - example
+spec:
+  type: service
+  lifecycle: experimental
+  owner: platform-team
+  providesApis: []

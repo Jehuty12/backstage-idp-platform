@@ -1,0 +1,20 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: node-service
+  title: Node.js Service
+  description: Scaffold a Node.js microservice with Docker and Helm chart
+spec:
+  owner: backstage-team
+  type: service
+  steps:
+    - id: fetch
+      name: Fetch from cookiecutter
+      action: fetch:cookiecutter
+      input:
+        url: "./templates/node-service"
+    - id: publish
+      name: Create repository
+      action: publish:github
+      input:
+        repoUrl: "{{ parameters.repoUrl }}"
