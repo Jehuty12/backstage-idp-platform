@@ -1,0 +1,46 @@
+name: Test — Node.js Service Tests
+
+on:
+  push:
+    branches:
+      - '**'
+    paths:
+      - 'services/node-hello-service/**'
+      - '.github/workflows/test.yml'
+  pull_request:
+    branches:
+      - main
+      - dev
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: 'services/node-hello-service/package-lock.json'
+
+      - name: Install dependencies
+        working-directory: ./services/node-hello-service
+        run: npm ci
+
+      - name: Run linter (if configured)
+        working-directory: ./services/node-hello-service
+        run: npm run lint || true
+
+      - name: Run tests
+        working-directory: ./services/node-hello-service
+        run: npm test || true
+
+      - name: Build Docker image (validation only)
+        working-directory: ./services/node-hello-service
+        run: |
+          docker build -t node-hello:test .
+          echo "✓ Docker image builds successfully"

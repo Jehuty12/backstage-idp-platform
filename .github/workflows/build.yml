@@ -1,0 +1,75 @@
+name: CI — Build & Push Docker Image
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+    paths:
+      - 'services/node-hello-service/**'
+      - '.github/workflows/build.yml'
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}/node-hello
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix={{branch}}-
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            latest
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./services/node-hello-service
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Update infrastructure repo (values.yaml)
+        if: github.ref == 'refs/heads/main'
+        run: |
+          # Clone infrastructure repo
+          git clone https://github.com/${{ github.repository_owner }}/infrastructure.git infra
+          cd infra
+
+          # Update image tag in values
+          IMAGE_TAG="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}"
+          sed -i "s|image.tag: .*|image.tag: ${{ github.sha }}|g" infrastructure/charts/node-hello/values.yaml
+
+          # Commit and push (or open PR)
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add infrastructure/charts/node-hello/values.yaml
+          git commit -m "chore(infra): update node-hello image tag to ${{ github.sha }}" || exit 0
+          git push origin main || echo "No changes to push"
