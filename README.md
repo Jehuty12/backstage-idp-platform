@@ -111,14 +111,16 @@ Comment utiliser ce README au fil du projet
 
 Progression / Checklist (à tenir à jour)
 - [x] Préparer l'environnement local (Minikube, kubectl, Helm)
-- [x] Provisionner cluster Vagrant/VirtualBox (kubeadm) — READY
-- [ ] Installer et configurer ArgoCD dans Minikube — EN COURS
+- [x] Provisionner cluster Vagrant/VirtualBox (kubeadm) — Kubernetes 1.31.14
+- [x] Initialiser master et installer CNI (Calico) — EN COURS
+- [ ] Démarrer workers et rejoindre le cluster
+- [ ] Installer et configurer ArgoCD dans Kubernetes
 - [ ] Installer Sealed Secrets (local dev)
 - [ ] Installer Backstage localement et configurer le catalogue
 - [x] Créer un repo `infrastructure` avec Helm charts et App-of-Apps ArgoCD
 - [x] Scaffold d'un microservice Node.js + Helm chart + Backstage template
 - [x] Ajouter templates Helm (Deployment, Service, _helpers)
-- [ ] Configurer GitHub Actions CI (build/push + update infra)
+- [x] Configurer GitHub Actions CI (build/push + update infra)
 - [ ] Intégrer ArgoCD pour déploiement GitOps automatique
 - [ ] RBAC et accès sécurisé
 - [ ] Observabilité: Prometheus/Grafana et logs (Loki/Fluentd)
@@ -154,3 +156,29 @@ Notes:
 
 ---
 _Fichier généré automatiquement par l’assistant. Mets-le à jour au fur et à mesure et utilise les liens vers les fichiers/PRs pour prouver le travail._
+Statut déploiement en cours :
+- ✓ Master VM running (Kubernetes 1.31.14)
+- ⏳ kubeadm init + Calico CNI en cours...
+- ⏱️ Prochaines étapes : démarrer workers, installer ArgoCD, tester CI/CD
+
+Commits récents (dev branch) :
+```
+chore(vagrant): upgrade kubernetes to v1.31 (latest stable)
+feat(github-actions): add CI/CD workflows for build, test, and infra updates
+```
+
+Pour continuer :
+```bash
+# Vérifier l'état du cluster une fois kubeadm init terminé
+vagrant ssh master
+sudo kubectl get nodes
+sudo kubectl get pods -A
+
+# Démarrer les workers
+vagrant up worker1 worker2
+vagrant provision worker1 worker2
+
+# Vérifier le cluster complet
+vagrant ssh master
+sudo kubectl get nodes
+```
