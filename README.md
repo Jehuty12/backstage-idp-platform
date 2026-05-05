@@ -39,34 +39,48 @@ Prérequis (local)
 - helm
 - git
 
-Quickstart local (résumé des commandes)
+Quickstart local — Vagrant + VirtualBox (Mode équipe)
+
+**Phase 1 : Setup cluster Kubernetes**
+
 ```bash
-# Démarrer minikube (driver Docker)
+# Script automatisé (Windows PowerShell)
+.\scripts\vagrant-setup.ps1
 
-# Option A — Minikube (alternatif)
-minikube start --driver=docker
+# Ou manuellement
+vagrant up master
+vagrant provision master
+vagrant up worker1 worker2
+vagrant provision worker1 worker2
 
-# Option B — Vagrant + VirtualBox (preferred for this project)
-# À la racine du projet :
-# vagrant up master
-# vagrant up worker1 worker2
+# Vérifier
+vagrant ssh master
+sudo kubectl get nodes
+```
 
-# Vérifier kubectl
-kubectl get nodes
+Voir [docs/vagrant/SETUP.md](docs/vagrant/SETUP.md) pour le dépannage.
+
+**Phase 2 : Installer ArgoCD & outils**
+
+```bash
+# SSH au master
+vagrant ssh master
+
+# Créer namespace ArgoCD
+sudo kubectl create namespace argocd
 
 # Installer ArgoCD
-kubectl create namespace argocd
-kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+sudo kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
 
-# Port-forward ArgoCD UI
-kubectl port-forward svc/argocd-server -n argocd 8080:443
+# Vérifier
+sudo kubectl get pods -n argocd
+```
 
-# Installer Sealed Secrets (dev)
-kubectl apply -f https://github.com/bitnami-labs/sealed-secrets/releases/latest/download/controller.yaml
+**Alternative rapide — Minikube (pour tests uniquement)**
 
-# Lancer Backstage en local (dans un dossier backstages-app)
-# npx @backstage/create-app
-# cd app && yarn dev
+```bash
+minikube start --driver=docker
+kubectl get nodes
 ```
 
 Structure du projet (suggestion)
@@ -82,15 +96,18 @@ Comment utiliser ce README au fil du projet
 
 Progression / Checklist (à tenir à jour)
 - [x] Préparer l'environnement local (Minikube, kubectl, Helm)
-- [ ] Installer et configurer ArgoCD dans Minikube
+- [x] Provisionner cluster Vagrant/VirtualBox (kubeadm) — READY
+- [ ] Installer et configurer ArgoCD dans Minikube — EN COURS
+- [ ] Installer Sealed Secrets (local dev)
 - [ ] Installer Backstage localement et configurer le catalogue
-- [ ] Créer un repo `infrastructure` avec Helm charts et App-of-Apps ArgoCD
-- [ ] Scaffold d'un microservice Node.js + Helm chart + Backstage template
+- [x] Créer un repo `infrastructure` avec Helm charts et App-of-Apps ArgoCD
+- [x] Scaffold d'un microservice Node.js + Helm chart + Backstage template
+- [x] Ajouter templates Helm (Deployment, Service, _helpers)
 - [ ] Configurer GitHub Actions CI (build/push + update infra)
 - [ ] Intégrer ArgoCD pour déploiement GitOps automatique
-- [ ] Ajouter gestion des secrets (Sealed Secrets / Vault) et RBAC
+- [ ] RBAC et accès sécurisé
 - [ ] Observabilité: Prometheus/Grafana et logs (Loki/Fluentd)
-- [ ] Documentation, demo vidéo et livrables CV (EN COURS)
+- [ ] Documentation, demo vidéo et livrables CV
 
 Livrables attendus
 - infrastructure/ (repo ou dossier) : Helm charts et manifests ArgoCD
