@@ -1,0 +1,48 @@
+# Vagrant
+.vagrant/
+*.vdi
+*.vbox
+*.log
+
+# VirtualBox
+.vbox-prev
+
+# IDE
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Node
+node_modules/
+package-lock.json
+
+# Docker
+docker-compose.override.yml
+
+# Kubernetes
+kubeconfig-*
+.kube/config-*
+
+# Backup files
+*.bak
+*.backup
+
+# Python
+__pycache__/
+*.pyc
+.env
+venv/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Terraform (if added later)
+.terraform/
+*.tfstate
+*.tfstate.lock.json
+
+# Disks directory (for external storage)
+disks/
