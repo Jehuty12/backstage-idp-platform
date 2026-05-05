@@ -41,6 +41,21 @@ Prérequis (local)
 
 Quickstart local — Vagrant + VirtualBox (Mode équipe)
 
+**Configuration préalable (important)** :
+
+Si tu utilises G:\VMs pour centraliser les disques des VMs, créer le répertoire :
+```powershell
+mkdir G:\VMs\backstage-idp-k8s\disks
+```
+
+Puis éditer `Vagrantfile` ligne ~12 :
+```ruby
+# Décommenter cette ligne pour utiliser G:\VMs
+DISK_DIR = "G:\\VMs\\backstage-idp-k8s\\disks"
+```
+
+Voir [docs/vagrant/SETUP.md](docs/vagrant/SETUP.md) pour les détails de cette organisation.
+
 **Phase 1 : Setup cluster Kubernetes**
 
 ```bash
