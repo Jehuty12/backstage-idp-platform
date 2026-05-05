@@ -49,20 +49,25 @@ Vagrant.configure("2") do |config|
         set -eux
         apt-get update
         apt-get install -y apt-transport-https ca-certificates curl gnupg lsb-release software-properties-common
+        
         # Install Docker
         apt-get install -y docker.io
         systemctl enable --now docker
+        usermod -aG docker vagrant
 
         # Disable swap
         swapoff -a || true
         sed -i.bak '/ swap / s/^/#/' /etc/fstab || true
 
-        # Kubernetes apt repo
-        curl -fsSL https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
-        echo "deb https://apt.kubernetes.io/ kubernetes-xenial main" > /etc/apt/sources.list.d/kubernetes.list
+        # Install Kubernetes tools using official release channel
+        mkdir -p /etc/apt/keyrings
+        curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.29/deb/Release.key | gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+        echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.29/deb/ /' | tee /etc/apt/sources.list.d/kubernetes.list
+        
         apt-get update
         apt-get install -y kubelet kubeadm kubectl
         apt-mark hold kubelet kubeadm kubectl
+        systemctl enable kubelet
       SHELL
 
       if node[:role] == "master"
