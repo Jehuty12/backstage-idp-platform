@@ -122,3 +122,27 @@ Notes:
 
 ---
 _Fichier généré automatiquement par l’assistant. Mets-le à jour au fur et à mesure et utilise les liens vers les fichiers/PRs pour prouver le travail._
+Git Workflow & Branching Strategy
+- `main` : production (stable, tested)
+- `dev` : pre-production, intégration des features
+- `feature/*` : branches de feature (une par fonctionnalité ou tâche)
+
+Workflow recommandé :
+1. Créer une branche feature depuis `dev` :
+```bash
+git checkout dev
+git pull
+git checkout -b feature/nom-de-la-feature
+```
+2. Committer les changements avec Conventional Commits :
+```bash
+git commit -m "feat(context): description" # features
+git commit -m "fix(context): description"   # bugfixes
+git commit -m "docs(context): description"  # documentation
+git commit -m "chore(context): description" # tâches non-code
+```
+3. Pousser la branche et créer une PR sur `dev` pour review.
+4. Une fois validée/mergée sur `dev`, préparer une PR `dev` → `main` pour production.
+
+Commits actuels :
+- `main` HEAD : chore(scaffold): add initial scaffolds for infrastructure, services and backstage-config
