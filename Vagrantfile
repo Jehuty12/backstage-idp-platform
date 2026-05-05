@@ -9,11 +9,8 @@ DISK_SIZE          = 10240    # MB (10 GB) - Additional disk per VM
 STORAGE_CONTROLLER = "SATA Controller"
 
 # === Disk directory configuration ===
-# Option 1: Store disks in G:\VMs\ (external organization)
-# DISK_DIR           = "G:\\VMs\\backstage-idp-k8s\\disks"
-
-# Option 2: Store disks locally in project (default)
-DISK_DIR           = File.join(Dir.pwd, "disks")
+# Store disks in G:\VMs\ (external organization)
+DISK_DIR           = "G:\\VMs\\backstage-idp-k8s\\disks"
 
 # Create disk directory if it doesn't exist
 Dir.mkdir(DISK_DIR) unless Dir.exist?(DISK_DIR)
