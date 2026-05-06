@@ -1,0 +1,57 @@
+---
+# ArgoCD RBAC Configuration for: admin, superviseur, dev (app-deployer), bob (read-only)
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argocd-rbac-cm
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: argocd-rbac-cm
+    app.kubernetes.io/part-of: argocd
+data:
+  policy.default: 'role:readonly'
+  policy.csv: |
+    # Permissions for admin role (full access)
+    p, admin, *, *, allow
+
+    # Permissions for superviseur role (almost full - no user management)
+    p, superviseur, applications, *, allow
+    p, superviseur, repositories, *, allow
+    p, superviseur, clusters, *, allow
+    p, superviseur, projects, *, allow
+
+    # Permissions for dev role (app-deployer - can sync/deploy apps)
+    p, dev, applications, get, allow
+    p, dev, applications, sync, allow
+    p, dev, applications, update, allow
+    p, dev, repositories, get, allow
+    p, dev, clusters, get, allow
+    p, dev, projects, get, allow
+
+    # Permissions for bob role (read-only)
+    p, bob, applications, get, allow
+    p, bob, repositories, get, allow
+    p, bob, clusters, get, allow
+    p, bob, projects, get, allow
+
+    # User role mappings
+    g, admin, admin
+    g, superviseur, superviseur
+    g, dev, dev
+    g, bob, bob
+---
+# ArgoCD local users configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argocd-cm
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: argocd-cm
+    app.kubernetes.io/part-of: argocd
+data:
+  # Local accounts configuration
+  accounts.admin: 'login'
+  accounts.superviseur: 'login'
+  accounts.dev: 'login'
+  accounts.bob: 'login'
