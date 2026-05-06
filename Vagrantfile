@@ -1,42 +1,43 @@
-# Vagrantfile — Provision a 3-node Kubernetes cluster (kubeadm) on VirtualBox
-# Supports custom disk directory for organizing VM disks separately
-
-# ====== CONFIG — Adapt to your environment ======
-BOX_NAME           = "debian/bookworm64"
-MEMORY             = 2048     # MB per VM
-CPUS               = 2        # CPUs per VM
-DISK_SIZE          = 10240    # MB (10 GB) - Additional disk per VM
-STORAGE_CONTROLLER = "SATA Controller"
-
-# === Disk directory configuration ===
-# Store disks in G:\VMs\ (external organization)
-DISK_DIR           = "G:\\VMs\\backstage-idp-k8s\\disks"
-
-# Create disk directory if it doesn't exist
-Dir.mkdir(DISK_DIR) unless Dir.exist?(DISK_DIR)
-
-# ====== Kubernetes nodes ======
-nodes = [
-  { name: "master",  ip: "192.168.56.10", role: "master" },
-  { name: "worker1", ip: "192.168.56.11", role: "worker" },
-  { name: "worker2", ip: "192.168.56.12", role: "worker" }
-]
-
 Vagrant.configure("2") do |config|
+  # Paramètres globaux - À adapter selon votre environnement
+  BOX_NAME           = "debian/bookworm64"
+  MEMORY             = 4096     # MB per VM (4 GB)
+  CPUS               = 4        # CPUs per VM (4 CPU)
+  DISK_SIZE          = 10240    # en Mo (10 Go)
+  STORAGE_CONTROLLER = "SATA Controller"
+  DISK_DIR           = "G:\\VMs\\backstage-idp-k8s\\disks"  # répertoire pour stocker les disques virtuels
+
+  # Configuration globale de la box
   config.vm.box = BOX_NAME
   config.vm.synced_folder ".", "/vagrant", :nfs => false
 
-  nodes.each do |node|
-    config.vm.define node[:name] do |node_cfg|
-      node_cfg.vm.hostname = node[:name]
-      node_cfg.vm.network :private_network, ip: node[:ip]
-      node_cfg.vm.provider :virtualbox do |vb|
-        vb.name = "k8s-#{node[:name]}"
-        vb.memory = MEMORY
-        vb.cpus = CPUS
+  # Configuration du provider VirtualBox pour toutes les VMs
+  config.vm.provider "virtualbox" do |vb|
+    vb.memory = MEMORY
+    vb.cpus   = CPUS
+    vb.customize ["modifyvm", :id, "--cpuexecutioncap", "100"]
+  end
 
-        # Attach secondary disk for container storage
+  # Création du répertoire pour les disques si nécessaire
+  Dir.mkdir(DISK_DIR) unless Dir.exist?(DISK_DIR)
+
+  # Définition des nœuds du cluster - Adaptez les IPs à votre réseau
+  nodes = [
+    { name: "master",  ip: "192.168.56.10", role: "master" },
+    { name: "worker1", ip: "192.168.56.11", role: "worker" },
+    { name: "worker2", ip: "192.168.56.12", role: "worker" }
+  ]
+
+  nodes.each do |node|
+    config.vm.define node[:name] do |node_config|
+      node_config.vm.hostname = node[:name]
+      node_config.vm.network "private_network", ip: node[:ip]
+
+      # Configuration du disque virtuel pour chaque VM
+      node_config.vm.provider "virtualbox" do |vb|
+        vb.name = "k8s-#{node[:name]}"
         disk_path = File.join(DISK_DIR, "disk-#{node[:name]}.vdi")
+        # Création du disque s'il n'existe pas déjà
         unless File.exist?(disk_path)
           vb.customize ["createhd", "--filename", disk_path, "--size", DISK_SIZE]
         end
@@ -44,68 +45,24 @@ Vagrant.configure("2") do |config|
                       "--port", "1", "--device", "0", "--type", "hdd", "--medium", disk_path]
       end
 
-      # Common provisioning: install Docker and Kubernetes tools
-      node_cfg.vm.provision "shell", inline: <<-SHELL
-        set -eux
-        apt-get update
-        apt-get install -y apt-transport-https ca-certificates curl gnupg lsb-release software-properties-common
-        
-        # Install required dependencies for kubeadm
-        apt-get install -y conntrack ethtool socat
-        
-        # Install Docker
-        apt-get install -y docker.io
-        systemctl enable --now docker
-        usermod -aG docker vagrant
-
-        # Disable swap
-        swapoff -a || true
-        sed -i.bak '/ swap / s/^/#/' /etc/fstab || true
-
-        # Install latest Kubernetes tools from official release channel
-        mkdir -p /etc/apt/keyrings
-        curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.31/deb/Release.key | gpg --dearmor --batch --no-tty -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg || true
-        echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.31/deb/ /' | tee /etc/apt/sources.list.d/kubernetes.list
-        
-        apt-get update
-        apt-get install -y kubelet kubeadm kubectl
-        apt-mark hold kubelet kubeadm kubectl
-        systemctl enable kubelet
-      SHELL
-
       if node[:role] == "master"
-        # Master init: kubeadm init and install a CNI
-        node_cfg.vm.provision "shell", inline: <<-SHELL
-          set -eux
-          # Initialize control plane
-          kubeadm init --apiserver-advertise-address=#{node[:ip]} --pod-network-cidr=192.168.0.0/16 || true
-          mkdir -p /home/vagrant/.kube
-          cp -i /etc/kubernetes/admin.conf /home/vagrant/.kube/config
-          chown vagrant:vagrant /home/vagrant/.kube/config
-
-          # Install Calico CNI
-          su - vagrant -c "kubectl apply -f https://docs.projectcalico.org/manifests/calico.yaml"
-
-          # Create a join script for workers
-          kubeadm token create --print-join-command > /vagrant/join.sh || true
-          chmod +x /vagrant/join.sh || true
-        SHELL
+        # Provisionnement du master avec le script d'installation Kubernetes
+        node_config.vm.provision "shell", path: "scripts/install.sh"
       else
-        # Worker: wait for join script then run it
-        node_cfg.vm.provision "shell", inline: <<-SHELL
-          set -eux
-          # Wait for join script from master
-          for i in {1..60}; do
-            if [ -f /vagrant/join.sh ]; then
-              break
-            fi
+        # Provisionnement des workers en passant directement la commande join en argument
+        node_config.vm.provision "shell", inline: <<-SHELL
+          echo "--------------------------------------------------"
+          echo "[DEBUG] Worker #{node[:name]} : attente du fichier de commande join..."
+          echo "--------------------------------------------------"
+          while [ ! -f /vagrant/kubeadm-join-command.sh ]; do
             sleep 5
           done
-          if [ -f /vagrant/join.sh ]; then
-            bash /vagrant/join.sh || true
-          else
-            echo "join.sh not found after waiting; please run 'vagrant ssh master' and check kubeadm init." >&2
-          fi
+          JOIN_CMD=$(cat /vagrant/kubeadm-join-command.sh)
+          echo "--------------------------------------------------"
+          echo "[DEBUG] Worker #{node[:name]} : commande join trouvée :"
+          echo "$JOIN_CMD"
+          echo "--------------------------------------------------"
+          sudo bash /vagrant/scripts/install-worker.sh "$JOIN_CMD"
         SHELL
       end
     end
