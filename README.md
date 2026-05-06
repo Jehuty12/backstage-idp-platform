@@ -187,13 +187,13 @@ sudo kubectl get nodes
 
 ## Status Final (05/06/2026)
 
-**? Cluster Kubernetes — Complètement opérationnel :**
+**? Cluster Kubernetes ï¿½ Complï¿½tement opï¿½rationnel :**
 - ? Master VM running (Kubernetes 1.31.14, Calico CNI)
 - ? 2 Workers running et jointes au cluster
-- ? ArgoCD installé et configuré
-- ? ArgoCD NodePort: 31200 — https://192.168.56.10:31200
+- ? ArgoCD installï¿½ et configurï¿½
+- ? ArgoCD NodePort: 31200 ï¿½ https://192.168.56.10:31200
 
-**? Utilisateurs ArgoCD configurés:**
+**? Utilisateurs ArgoCD configurï¿½s:**
 - admin (full access)
 - superviseur (nearly full)
 - dev (app-deployer)
