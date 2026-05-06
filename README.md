@@ -112,17 +112,18 @@ Comment utiliser ce README au fil du projet
 Progression / Checklist (à tenir à jour)
 - [x] Préparer l'environnement local (Minikube, kubectl, Helm)
 - [x] Provisionner cluster Vagrant/VirtualBox (kubeadm) — Kubernetes 1.31.14
-- [x] Initialiser master et installer CNI (Calico) — EN COURS
-- [ ] Démarrer workers et rejoindre le cluster
-- [ ] Installer et configurer ArgoCD dans Kubernetes
-- [ ] Installer Sealed Secrets (local dev)
-- [ ] Installer Backstage localement et configurer le catalogue
+- [x] Initialiser master et installer CNI (Calico)
+- [x] Démarrer workers et rejoindre le cluster
+- [x] Installer et configurer ArgoCD dans Kubernetes
+- [x] Exposer ArgoCD via NodePort (https://192.168.56.10:31200)
+- [x] Créer utilisateurs et RBAC dans ArgoCD (admin, superviseur, dev, bob)
 - [x] Créer un repo `infrastructure` avec Helm charts et App-of-Apps ArgoCD
 - [x] Scaffold d'un microservice Node.js + Helm chart + Backstage template
 - [x] Ajouter templates Helm (Deployment, Service, _helpers)
 - [x] Configurer GitHub Actions CI (build/push + update infra)
+- [ ] Installer Sealed Secrets (local dev)
+- [ ] Installer Backstage localement et configurer le catalogue
 - [ ] Intégrer ArgoCD pour déploiement GitOps automatique
-- [ ] RBAC et accès sécurisé
 - [ ] Observabilité: Prometheus/Grafana et logs (Loki/Fluentd)
 - [ ] Documentation, demo vidéo et livrables CV
 
@@ -182,3 +183,43 @@ vagrant provision worker1 worker2
 vagrant ssh master
 sudo kubectl get nodes
 ```
+---
+
+## Status Final (05/06/2026)
+
+**? Cluster Kubernetes � Compl�tement op�rationnel :**
+- ? Master VM running (Kubernetes 1.31.14, Calico CNI)
+- ? 2 Workers running et jointes au cluster
+- ? ArgoCD install� et configur�
+- ? ArgoCD NodePort: 31200 � https://192.168.56.10:31200
+
+**? Utilisateurs ArgoCD configur�s:**
+- admin (full access)
+- superviseur (nearly full)
+- dev (app-deployer)
+- bob (read-only)
+
+**Credentials (exemples):**
+- admin: AdminPass123!
+- superviseur: SuperPass456!
+- dev: DevPass789!
+- bob: BobReadOnly!@
+
+**Recent Commits:**
+- feat: add ArgoCD users, RBAC configuration and user setup scripts
+- chore: merge cleanup-ignore into dev
+
+**To Stop Cluster:**
+\\\ash
+vagrant halt
+\\\
+
+**To Start Cluster:**
+\\\ash
+vagrant up
+\\\
+
+**Next Steps:**
+1. Install Sealed Secrets
+2. Install Backstage
+3. Deploy App-of-Apps with ArgoCD
