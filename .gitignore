@@ -31,6 +31,8 @@ kubeconfig-*
 
 # Generated kubeadm join script with sensitive token
 join.sh
+kubeadm-join-command.sh
+conv.txt
 
 # Python
 __pycache__/
