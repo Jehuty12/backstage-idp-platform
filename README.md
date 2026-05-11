@@ -144,7 +144,7 @@ backstage-idp-platform/
 - [x] Créer infrastructure avec Helm charts et App-of-Apps
 - [x] Scaffold microservice Node.js + Helm + Backstage template
 - [x] Configurer GitHub Actions CI (build/push)
-- [ ] Installer Sealed Secrets
+- [x] Installer Sealed Secrets et valider le chiffrement/déchiffrement de test
 - [ ] Installer et configurer Backstage
 - [ ] Intégrer ArgoCD avec déploiement GitOps complet
 - [ ] Observabilité (Prometheus/Grafana/Loki)
@@ -212,10 +212,32 @@ chore: merge cleanup-ignore into dev
 
 ## Prochaines étapes
 
-1. **Sealed Secrets** : Installer et configurer pour gestion sécurisée des secrets
-2. **Backstage** : Installer localement, configurer catalogue + templates Scaffolder
-3. **App-of-Apps** : Déployer manifests ArgoCD pour services d'exemple
-4. **Observabilité** : Prometheus, Grafana, Loki
+1. **Backstage** : Installer localement, configurer catalogue + templates Scaffolder
+2. **App-of-Apps** : Déployer manifests ArgoCD pour services d'exemple
+3. **Observabilité** : Prometheus, Grafana, Loki
+
+## Option A - Workflow Sealed Secrets
+
+- Un helper réutilisable est disponible dans `scripts/seal-secret.sh` et `scripts/seal-secret.ps1`
+- Utiliser ce workflow ensuite pour sécuriser les secrets de Backstage
+- Garder les valeurs sensibles hors du repo tout en restant compatible GitOps
+
+Usage typique:
+
+```bash
+./scripts/seal-secret.sh /chemin/secret.yaml /chemin/secret-sealed.yaml ~/sealing-key.pub
+```
+
+### Secrets Backstage à préparer
+
+Avant l'installation complète de Backstage, préparer au minimum ces secrets:
+
+- `backstage-github-token` ou une GitHub App pour publier les repositories générés par le Scaffolder
+- `backstage-session-secret` pour la session utilisateur
+- `backstage-auth` si OAuth GitHub/GitLab est activé plus tard
+- `backstage-postgres` si Backstage utilise une base PostgreSQL dédiée
+
+Ces valeurs devront être transformées en `SealedSecret` avant d'être ajoutées au flux GitOps.
 
 ## Notes de développement
 
